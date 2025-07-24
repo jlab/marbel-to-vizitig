@@ -3,7 +3,7 @@ import argparse
 import ast  # string to list umwandeln
 from collections import defaultdict
 
-def parse_gfa(input_path, num_of_samples):
+def parse_gfa(input_path, color_by):
     """
     Parse a GFA-like file and extract:
     - S lines (sequences and optional metadata)
@@ -14,7 +14,7 @@ def parse_gfa(input_path, num_of_samples):
         links: dict of {unitig_id: list of L: edge descriptors}
     """
     sequences = {} # here I create the keys myself, same for metadata
-    metadata = {} 
+    metadata = defaultdict(list)
     abundance = {}  # dieses Dict ist aktuell ohne Nutzen, da es später ein Feld befüllt, dass vizitig gar nicht verarbeitet
 
     sums = {}
@@ -31,24 +31,18 @@ def parse_gfa(input_path, num_of_samples):
                 # Metadata: samples / tags rausfiltern
                 # Suche nach dem ersten Vorkommen einer Liste in eckigen Klammern (z. B. ['a', 'b'])
                 # alternativ nach samples: wenn das immer so heißt
-                match = re.search(r'\[.*?\]', comment)
 
-                if match:
-                    list_str = match.group(0) # gibt vollständigen Treffer zurück, also mit []
-                    samples = ast.literal_eval(list_str) # wandelt ihn um in Liste
-                else: samples = []
+                for color_mode in color_by: 
+                    match = re.search(rf'{color_mode}: (\[[^\[\]]*\])', comment)
 
-                samples_line = ','.join(samples) # you must not have spaces in the samplen names
-                metadata[sid] = samples_line
+                    samples = []
+                    if match:
+                        list_str = match.group(1) # gibt inhalt der () aus
+                        samples = ast.literal_eval(list_str) # wandelt ihn um in Liste
 
-                # etwas das sich sum zieht
-                match = re.search(r"sum:\s*([\d\.]+)", comment)
-
-                # den rechenschritt könnte man auch auslagern
-                if match:
-                    sum_int = int(match.group(1))  # gibt nur den Teil des Treffers der in den Klammern des re-Ausdrucks steht
-                    sums[sid] = sum_int
-                    abundance[sid]=sum_int/num_of_samples  # dieses Dict ist aktuell ohne Nutzen, da es später ein Feld befüllt, dass vizitig gar nicht verarbeitet
+                    #samples_line = ','.join(samples) # you must not have spaces in the samplen names
+                    # metadata value ist liste für jeden color mode
+                    metadata[sid].append(samples)
 
             elif line.startswith('L'):
                 # Link/edge line
@@ -89,28 +83,13 @@ def write_transcript_fasta(transcript_to_sids, sequences, output_path):
                 else: print(f"{sid} existiert in sequences nicht")
 
 
-def write_fasta_unitig(out, sid, sequences, metadata, links, abundance, sums):
+def write_fasta_unitig(out, sid, sequences,links):
     """
     Schreibt eine FASTA-Einheit (Header + Sequenz) für einen Unitig
     """
     header_parts = [f">{sid} genes: GENE0"]  # Header beginnt mit ID + Gene-Info
 
-    if metadata.get(sid):  # falls Metadaten vorhanden
-        header_parts.append(f"metadata: {metadata[sid]}")  # z. B. metadata: A_1,B_2
-
     header_parts += links.get(sid, [])  # alle "L:"-Einträge (Kanten)
-
-    if sums.get(sid):  
-        # dieses Feld ist aktuell ein Platzhalter ohne Funktion, denn:
-        # der KC:i:-Eintrag (absolut abundance) wird vom vizitig parser nicht gelesen (optional)
-        # hier wird aktuell die mean abundance eingetragen, da sie ebenfalls Probleme hat s.u.
-        header_parts.append(f"KC:i:{abundance[sid]}")
-
-    if abundance.get(sid):  
-        # eigentlich sollte hier der (mean) Abundance-Wert eingetragen werden (optional)
-        # Aber im webclient ist Filtern nur nach Werten >= 1 möglich 
-        # daher verwende ich hier die absolut Abundance aus sums
-        header_parts.append(f"km:f:{sums[sid]}")
 
     # Alle Teile mit Leerzeichen verbinden und schreiben
     header_line = ' '.join(header_parts)
@@ -121,7 +100,7 @@ def write_fasta_unitig(out, sid, sequences, metadata, links, abundance, sums):
 
 
 
-def write_sample_fas(output_dir, sequences, metadata, links, abundance, sums):
+def write_sample_fas(output_dir, color_by_index, color_by, sequences, metadata, links):
     """
     Schreibt für jedes vorkommende Sample eine eigene FASTA-Datei.
     Jede Datei enthält alle Unitigs, in deren Metadaten dieses Sample enthalten ist.
@@ -135,31 +114,35 @@ def write_sample_fas(output_dir, sequences, metadata, links, abundance, sums):
         makedirs(output_dir)
 
     # sample_to_unitigs sammelt pro Sample alle zugehörigen Unitig-IDs
-    sample_to_unitigs = defaultdict(list)
+    color_to_unitigs = defaultdict(list)
 
     # Durchlaufe alle Unitigs und ihre Metadaten
-    for sid, samples_str in metadata.items():
-        # Die Metadaten enthalten Samples als kommaseparierte Strings -> in Liste umwandeln
-        for sample in samples_str.split(','):
-            # hänge neue sid an die Listen an, die zu den jeweiligen Samples gehören
-            sample_to_unitigs[sample].append(sid)
+    for sid, colorss in metadata.items():
+        # wähle die liste die zum aktuellen color mode gehört
+        colors = colorss[color_by_index]
 
-    # Für jedes Sample wird eine eigene Datei geschrieben
-    for sample, sids in sample_to_unitigs.items():
+        for color in colors:
+            # hänge neue sid an die Listen an, die zu den jeweiligen Samples gehören
+            color_to_unitigs[color].append(sid)
+
+    print(color_by)
+    # Für jede color wird eine eigene Datei geschrieben
+    for color, sids in color_to_unitigs.items():
         # for ... in dict bringt liste von Tupeln von key und value
         # das tupel wird direkt entpackt
-        output_path = join(output_dir, f"Sample_{sample}.fa")
+        
+        output_path = join(output_dir, f"{color_by.replace(" ", "_")}_{color}.fa")
 
         # Datei öffnen zum Schreiben
         with open(output_path, 'w') as out:
             # Alle zugehörigen Unitigs für dieses Sample schreiben
             for sid in sids:
                 # Verwende die Hilfsfunktion, um Header + Sequenz zu schreiben
-                write_fasta_unitig(out, sid, sequences, metadata, links, abundance, sums)
+                write_fasta_unitig(out, sid, sequences, links)
 
 
 
-def write_bcalm_fa(output_path, sequences, metadata, links, abundance, sums):
+def write_bcalm_fa(output_path, sequences, links):
     """
     Writes a bcalm style fasta-file, using the information stored in dictionaries
 
@@ -168,7 +151,7 @@ def write_bcalm_fa(output_path, sequences, metadata, links, abundance, sums):
     """
     with open(output_path, 'w') as out:
         for sid in sequences:
-            write_fasta_unitig(out, sid, sequences, metadata, links, abundance, sums)
+            write_fasta_unitig(out, sid, sequences, links)
 
 
 
@@ -177,26 +160,32 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert GFA file to bcalm FASTA-like format.")
     parser.add_argument("input_gfa", help="Pfad zur Eingabe-GFA-Datei")
     parser.add_argument("output_fa", help="Pfad zur Ausgabedatei")
-    parser.add_argument("num_of_samples", type=int, help="Anzahl der verwendeten Samples")
+    #parser.add_argument("num_of_samples", type=int, help="Anzahl der verwendeten Samples")
     parser.add_argument("--sample_dir", default="samples", help="Ordner für pro-Sample FASTA-Dateien")
-    parser.add_argument("output_transcript")
-    parser.add_argument("gaf_path")
+    parser.add_argument("--color_by", nargs='*', default=["samples"], help="Wonach gecolort werden soll")
+    #parser.add_argument("output_transcript")
+    #parser.add_argument("gaf_path")
 
     args = parser.parse_args()
 
     # Parsen and konvertieren
-    sequences, metadata, links, abundance, sums = parse_gfa(args.input_gfa, args.num_of_samples)
+    sequences, metadata, links, abundance, sums = parse_gfa(args.input_gfa, args.color_by)
     
-    write_bcalm_fa(args.output_fa, sequences, metadata, links, abundance, sums)
-    write_sample_fas(args.sample_dir, sequences, metadata, links, abundance, sums)
+    write_bcalm_fa(args.output_fa, sequences, links)
+    # color fas für jedes color by schreiben
+    print(args.color_by)
 
-    transcript_to_sids = parse_gaf(args.gaf_path)
+    for color_by_index in range(0, len(args.color_by)):
+        print(color_by_index)
+        write_sample_fas(args.sample_dir, color_by_index, args.color_by[color_by_index], sequences, metadata, links)
 
-    write_transcript_fasta(transcript_to_sids, sequences, args.output_transcript)
+    #transcript_to_sids = parse_gaf(args.gaf_path)
+
+    #write_transcript_fasta(transcript_to_sids, sequences, args.output_transcript)
 
     # nur zur Kontrolle
-    if not transcript_to_sids:
-        print("transcript_to_sids is an empty dict")
+    #if not transcript_to_sids:
+        #print("transcript_to_sids is an empty dict")
     # schlüssel_typen = {type(key) for key in sequences.keys()}
     # print(f"Die Schlüssel im Dict haben den Typ {schlüssel_typen}")
     

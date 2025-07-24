@@ -4,7 +4,7 @@ cd ~/vizitig
 source venv/bin/activate
 
 vizitig build ./bigger_test.fa -n bigger_test
-vizitig index bigger_test -t RustIndex # or SQLite
+vizitig index build bigger_test -t RustIndex # or SQLite
 
 vizitig annotate bigger_test --transcripts metatranscriptome_reference.fasta
 vizitig annotate bigger_test -e generated_transcipts.fa
