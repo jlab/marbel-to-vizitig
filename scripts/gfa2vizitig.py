@@ -125,7 +125,6 @@ def write_sample_fas(output_dir, color_by_index, color_by, sequences, metadata, 
             # hänge neue sid an die Listen an, die zu den jeweiligen Samples gehören
             color_to_unitigs[color].append(sid)
 
-    print(color_by)
     # Für jede color wird eine eigene Datei geschrieben
     for color, sids in color_to_unitigs.items():
         # for ... in dict bringt liste von Tupeln von key und value
@@ -172,10 +171,8 @@ if __name__ == "__main__":
     
     write_bcalm_fa(args.output_fa, sequences, links)
     # color fas für jedes color by schreiben
-    print(args.color_by)
 
     for color_by_index in range(0, len(args.color_by)):
-        print(color_by_index)
         write_sample_fas(args.sample_dir, color_by_index, args.color_by[color_by_index], sequences, metadata, links)
 
     #transcript_to_sids = parse_gaf(args.gaf_path)

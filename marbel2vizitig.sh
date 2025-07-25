@@ -25,6 +25,7 @@ cd ..
 
 
 # marbel
+echo "generating marbel dataset..."
 marbel --n-species $N_SPECIES \
         --n-orthogroups $N_OGS \
         --library-size $LIB_SIZE \
@@ -44,6 +45,7 @@ marbel --n-species $N_SPECIES \
 # dbg
 PATH="/mnt/data/bin/dbg/target/release/:$PATH" # add dbg to path
 
+echo "building debruijn graph with dbg..."
 dbg --csv $name/file_list.csv \
     --memory $MEM \
     --out $name/graphs/dbg_g \
@@ -56,6 +58,7 @@ dbg --csv $name/file_list.csv \
     --stranded \
     --threads 26
 
+echo "writing debruijn graph orthogoups with dbg..."
 dbg --cached-graph $name/graphs/dbg_g.graph.dbg \
     --memory $MEM \
     --out $name/graphs/dbg_o \
@@ -70,7 +73,7 @@ dbg --cached-graph $name/graphs/dbg_g.graph.dbg \
     --threads 26
 
 # gfa to vizitig with genes and then ogs
-
+echo "running gfa2vizitig.py..."
 python scripts/gfa2vizitig.py \
 	$name/graphs/dbg_g.gfa \
 	$name/graphs/dbg_g.fa \
@@ -85,9 +88,11 @@ python scripts/gfa2vizitig.py \
 
 
 # add graph to vizitig and color by genes and orthogroups
+echo "building vizitig graph..."
 vizitig build $name/graphs/dbg_g.fa -n $name
 vizitig index build $name -t RustIndex
 
+echo "coloring vizitig graph by genes..."
 files=$(ls $name/genes/)
 for file in $files
 do
@@ -95,6 +100,7 @@ do
     vizitig color -f $name/genes/$file -m g_$NAME $name
 done
 
+echo "coloring vizitig graph by orthogroups..."
 files=$(ls $name/ogs/)
 for file in $files
 do
