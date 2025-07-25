@@ -5,7 +5,7 @@ main_folder=$1
 cd ./$main_folder/simulated_reads
 
 # CSV-Datei vorbereiten
-echo -n > ../file_list_csv/file_list.csv
+echo -n > ../file_list.csv
 
 # Alle passenden FASTQ-Dateien finden
 for r1 in sample_*_group*_R1.fastq.gz; do
@@ -28,7 +28,7 @@ for r1 in sample_*_group*_R1.fastq.gz; do
         fi
 
         # Schreibe Zeile in CSV
-        echo "$r1,$r2,$group_code,$sample_num" >> ../file_list_csv/file_list.csv
+        echo "$r1,$r2,$group_code,$sample_num" >> ../file_list.csv
     fi
 done
 

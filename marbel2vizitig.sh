@@ -4,72 +4,100 @@ source /mnt/data/bin/vizitig/venv/bin/activate
 # project name
 name=$1
 
-mkdir $name
-cd $name
-mkdir samples GA_transcripts graphs file_list_csv simulated_reads
-cd ..
-
+# parameters
 # marbel
+N_SPECIES=10
 N_OGS=2000
-
-marbel --n-species 10 \
-        --n-orthogroups $N_OGS \
-        --library-size 100000 \
-        --n-samples 3 3 \
-        --seed 23 \
-        --outdir $name/simulated_reads
-
-# make csv
-
-/mnt/data/bin/marbel-to-vizitig/3_make_list.sh $name
+LIB_SIZE=100000
+N_SAMPLES="3 3"
+SEED=23
 
 # dbg
+K=20 
+MEM=10 # memory limit 
 
-# path to dbg
-PATH="/mnt/data/bin/dbg/target/release/:$PATH"
 
-dbg --csv $name/file_list_csv/file_list.csv \
-    --memory 10 \
-    --out $name/graphs/dbg_graph \
+# make directories
+mkdir $name
+cd $name
+mkdir samples graphs simulated_reads
+cd ..
+
+
+# marbel
+marbel --n-species $N_SPECIES \
+        --n-orthogroups $N_OGS \
+        --library-size $LIB_SIZE \
+        --n-samples $N_SAMPLES \
+        --seed $SEED \
+        --outdir $name/simulated_reads \
+        --library-size-distribution negative_binomial \
+        --threads 26 \
+        --group-orthology-level very_high \
+        --error-model NextSeq
+
+
+# make csv
+/mnt/data/bin/marbel-to-vizitig/3_make_list.sh $name
+
+
+# dbg
+PATH="/mnt/data/bin/dbg/target/release/:$PATH" # add dbg to path
+
+dbg --csv $name/file_list.csv \
+    --memory $MEM \
+    --out $name/graphs/dbg_g \
+    --checkpoint \
     --format gfa \
-    --summarizer id \
+    --summarizer id-map-em \
     --gene-summary $name/simulated_reads/summary/gene_summary.csv \
-    --gene-to-og # label by orthogroups instead of gene names
+    --transcriptome-reference $name/simulated_reads/summary/metatranscriptome_reference.fasta \
+    -k $K \
+    --stranded \
+    --threads 26
 
-# graph aligner
+dbg --cached-graph $name/graphs/dbg_g.graph.dbg \
+    --memory $MEM \
+    --out $name/graphs/dbg_o \
+    --checkpoint \
+    --format gfa \
+    --summarizer id-map-em \
+    --gene-summary $name/simulated_reads/summary/gene_summary.csv \
+    --transcriptome-reference $name/simulated_reads/summary/metatranscriptome_reference.fasta \
+    -k $K \
+    --gene-to-og \
+    --stranded \
+    --threads 26
 
-GraphAligner \
-    -g $name/graphs/dbg_graph.gfa \
-    -f $name/simulated_reads/summary/metatranscriptome_reference.fasta \
-    -a $name/graphs/dbg_graph_aligned.gaf' \
-    -x dbg
-
-
-# gfa to vizitig
+# gfa to vizitig with genes and then ogs
 
 python scripts/gfa2vizitig.py \
-	$name/graphs/dbg_graph.gfa \
-	$name/graphs/dbg_graph.fa \
-	3 \
-	--sample_dir $name/samples \
-	$name/GA_transcripts/generated_transcripts.fa \
-	$name/graphs/dbg_graph_aligned.gaf'
+	$name/graphs/dbg_g.gfa \
+	$name/graphs/dbg_g.fa \
+	--sample_dir $name/genes \
+    --color_by IDs "mapped IDs" \
+
+python scripts/gfa2vizitig.py \
+	$name/graphs/dbg_o.gfa \
+	$name/graphs/dbg_o.fa \
+	--sample_dir $name/ogs \
+    --color_by IDs "mapped IDs" \
 
 
-# add to vizitig
-
-vizitig build $name/graphs/dbg_graph.fa -n $name
-
+# add graph to vizitig and color by genes and orthogroups
+vizitig build $name/graphs/dbg_g.fa -n $name
 vizitig index build $name -t RustIndex
 
-vizitig annotate $name --transcripts $name/simulated_reads/summary/metratranscriptome_reference.fasta
-vizitig annotate $name -e $name/GA_transcripts/generated_transcripts.fa
-
-for og in &(seq 0 $N_OGS)
+files=$(ls $name/genes/)
+for file in $files
 do
-	file=$name/samples/Sample_$og.fa
-	if [ -f $file ]
-	then
-		vizitig color -f $file -m og$og $name
-	fi
+    NAME=$(echo $file | sed "s;.fa;;g")
+    vizitig color -f $name/genes/$file -m g_$NAME $name
+done
+
+files=$(ls $name/ogs/)
+for file in $files
+do
+    NAME=$(echo $file | sed "s;.fa;;g")
+    vizitig color -f $name/ogs/$file -m o_$NAME $name
 done

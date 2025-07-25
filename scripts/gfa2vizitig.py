@@ -130,8 +130,7 @@ def write_sample_fas(output_dir, color_by_index, color_by, sequences, metadata, 
     for color, sids in color_to_unitigs.items():
         # for ... in dict bringt liste von Tupeln von key und value
         # das tupel wird direkt entpackt
-        
-        output_path = join(output_dir, f"{color_by.replace(" ", "_")}_{color}.fa")
+        output_path = join(output_dir, f"{color_by[0]}_{color}.fa")
 
         # Datei öffnen zum Schreiben
         with open(output_path, 'w') as out:
