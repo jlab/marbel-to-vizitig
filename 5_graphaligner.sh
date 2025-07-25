@@ -8,11 +8,11 @@
 #SBATCH --time=1-00:00:00
 
 # replace with your path to GraphAligner
-path_to_GA=$HOME/miniconda3/bin/
+path_to_GA=$HOME/miniconda3/bin
 
 main_folder=$1
 
-$path_to_GA/GraphAligner \
+GraphAligner \
     -g $main_folder/graphs/$main_folder'.gfa' \
     -f $main_folder/simulated_reads/summary/metatranscriptome_reference.fasta \
     -a $main_folder/graphs/$main_folder'_aligned.gaf' \

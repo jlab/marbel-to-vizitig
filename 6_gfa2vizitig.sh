@@ -11,4 +11,9 @@
 
 main_folder=$1
 
-python scripts/gfa2vizitig.py $main_folder/graphs/$main_folder'.gfa' $main_folder/graphs/$main_folder'.fa' 3 --sample_dir samples $main_folder/GA_transcripts/generated_transcripts.fa $main_folder/graphs/$main_folder'_aligned.gaf'
+python /mnt/data/bin/marbel-to-vizitig/scripts/gfa2vizitig.py \
+	--sample_dir $main_folder/samples \
+	$main_folder/graphs/$main_folder'.gfa' \
+	$main_folder/graphs/$main_folder'.fa' \
+	--color_by samples
+

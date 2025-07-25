@@ -8,7 +8,7 @@
 #SBATCH --time=1-00:00:00           
 
 # replace with your path to dbg
-PATH="/homes/mneuhoff/git_projekte/dbg/target/release:$PATH"
+PATH="/mnt/data/bin/dbg/target/release:$PATH"
 
 main_folder=$1
 
