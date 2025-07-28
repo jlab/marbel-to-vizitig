@@ -13,38 +13,43 @@ N_SAMPLES="3 3"
 SEED=23
 
 # dbg
-K=20 
-MEM=10 # memory limit 
+K=20
+MEM=10 # memory limit
 
 
 # make directories
 mkdir $name
 cd $name
-mkdir samples graphs simulated_reads
+mkdir genes ogs  graphs
 cd ..
 
-
-# marbel
-echo "generating marbel dataset..."
-marbel --n-species $N_SPECIES \
-        --n-orthogroups $N_OGS \
-        --library-size $LIB_SIZE \
-        --n-samples $N_SAMPLES \
-        --seed $SEED \
-        --outdir $name/simulated_reads \
-        --library-size-distribution negative_binomial \
-        --threads 26 \
-        --group-orthology-level very_high \
-        --error-model NextSeq
+if [ -d $name/simulated_reads ]
+then
+	echo "marbel dir already exists, continuing with next step"
+else
+	# marbel
+	echo "generating marbel dataset..."
+	marbel --n-species $N_SPECIES \
+	        --n-orthogroups $N_OGS \
+	        --library-size $LIB_SIZE \
+	        --n-samples $N_SAMPLES \
+	        --seed $SEED \
+	        --outdir $name/simulated_reads \
+	        --library-size-distribution negative_binomial \
+	        --threads 26 \
+	        --group-orthology-level very_high \
+	        --error-model NextSeq
+fi
 
 
 # make csv
 /mnt/data/bin/marbel-to-vizitig/3_make_list.sh $name
 
 
+
 # dbg
 PATH="/mnt/data/bin/dbg/target/release/:$PATH" # add dbg to path
-
+export RUST_LOG=debug
 echo "building debruijn graph with dbg..."
 dbg --csv $name/file_list.csv \
     --memory $MEM \

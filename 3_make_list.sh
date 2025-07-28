@@ -2,13 +2,14 @@
 
 main_folder=$1
 
-cd ./$main_folder/simulated_reads
+cd ./$main_folder
 
 # CSV-Datei vorbereiten
-echo -n > ../file_list.csv
-
+echo -n > file_list.csv
+# for absolute path
+wd=$(pwd)
 # Alle passenden FASTQ-Dateien finden
-for r1 in sample_*_group*_R1.fastq.gz; do
+for r1 in simulated_reads/group_*_sample_*_R1.fastq.gz; do
     # Entsprechende R2-Datei
     r2="${r1/_R1.fastq.gz/_R2.fastq.gz}"
 
@@ -28,8 +29,8 @@ for r1 in sample_*_group*_R1.fastq.gz; do
         fi
 
         # Schreibe Zeile in CSV
-        echo "$r1,$r2,$group_code,$sample_num" >> ../file_list.csv
+        echo "$wd/$r1,$wd/$r2,$group_code,$sample_num" >> file_list.csv
     fi
 done
 
-cd ../..
+cd ..
