@@ -50,24 +50,37 @@ fi
 # dbg
 PATH="/mnt/data/bin/dbg/target/release/:$PATH" # add dbg to path
 export RUST_LOG=debug
-echo "building debruijn graph with dbg..."
-dbg --csv $name/file_list.csv \
+if [ ! -f $name/graphs/dbg.graph.dbg ]
+then
+	echo "building debruijn graph with dbg..."
+	dbg --csv $name/file_list.csv \
+	    --memory $MEM \
+	    --out $name/graphs/dbg \
+	    --checkpoint \
+	    --summarizer id-map-em \
+	    --gene-summary $name/simulated_reads/summary/gene_summary.csv \
+	    --transcriptome-reference $name/simulated_reads/summary/metatranscriptome_reference.fasta \
+	    -k $K \
+	    --stranded \
+	    --threads 26
+fi
+
+echo "writing debruijn graph genes with dbg..."
+dbg --cached-graph $name/graphs/dbg.graph.dbg \
     --memory $MEM \
     --out $name/graphs/dbg_g \
-    --checkpoint \
-    --format gfa \
     --summarizer id-map-em \
     --gene-summary $name/simulated_reads/summary/gene_summary.csv \
     --transcriptome-reference $name/simulated_reads/summary/metatranscriptome_reference.fasta \
+    --format gfa \
     -k $K \
     --stranded \
     --threads 26
 
 echo "writing debruijn graph orthogoups with dbg..."
-dbg --cached-graph $name/graphs/dbg_g.graph.dbg \
+dbg --cached-graph $name/graphs/dbg.graph.dbg \
     --memory $MEM \
     --out $name/graphs/dbg_o \
-    --checkpoint \
     --format gfa \
     --summarizer id-map-em \
     --gene-summary $name/simulated_reads/summary/gene_summary.csv \
@@ -79,13 +92,13 @@ dbg --cached-graph $name/graphs/dbg_g.graph.dbg \
 
 # gfa to vizitig with genes and then ogs
 echo "running gfa2vizitig.py..."
-python scripts/gfa2vizitig.py \
+python /mnt/data/bin/marbel-to-vizitig/scripts/gfa2vizitig.py \
 	$name/graphs/dbg_g.gfa \
 	$name/graphs/dbg_g.fa \
 	--sample_dir $name/genes \
     --color_by IDs "mapped IDs" \
 
-python scripts/gfa2vizitig.py \
+python  /mnt/data/bin/marbel-to-vizitig/scripts/gfa2vizitig.py \
 	$name/graphs/dbg_o.gfa \
 	$name/graphs/dbg_o.fa \
 	--sample_dir $name/ogs \
