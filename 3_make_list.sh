@@ -1,15 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+base_dir="$(pwd)"
 
-main_folder=$1
+name=$1
+mkdir -p "$name/file_list_csv"
 
-cd ./$main_folder
+
 
 # CSV-Datei vorbereiten
-echo -n > file_list.csv
-# for absolute path
-wd=$(pwd)
+: > "$name/file_list_csv/file_list.csv"
+
+
+
 # Alle passenden FASTQ-Dateien finden
-for r1 in simulated_reads/group_*_sample_*_R1.fastq.gz; do
+for r1 in "$name"/simulated_reads/group_*_sample*_R1.fastq.gz; do
     # Entsprechende R2-Datei
     r2="${r1/_R1.fastq.gz/_R2.fastq.gz}"
 
@@ -19,7 +23,7 @@ for r1 in simulated_reads/group_*_sample_*_R1.fastq.gz; do
         sample_num=$(echo "$r1" | grep -oP 'sample_\K[0-9]+')
 
         # Gruppe extrahieren (1 oder 2)
-        group=$(echo "$r1" | grep -oP 'group\K[12]')
+        group=$(echo "$r1" | grep -oP 'group_\K[12]')
 
         # Gruppencode A oder B
         if [[ "$group" == "1" ]]; then
@@ -29,8 +33,6 @@ for r1 in simulated_reads/group_*_sample_*_R1.fastq.gz; do
         fi
 
         # Schreibe Zeile in CSV
-        echo "$wd/$r1,$wd/$r2,$group_code,$sample_num" >> file_list.csv
+        echo "$base_dir/$r1,$base_dir/$r2,$group_code,$sample_num" >> "$name/file_list_csv/file_list.csv"
     fi
 done
-
-cd ..
