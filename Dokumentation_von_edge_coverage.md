@@ -4,6 +4,7 @@ Ziel des Praktikums war es, Edge-Coverage-Informationen aus einer  .gfa-Datei zu
 Dazu wurde die bestehende Pipeline erweitert und das Vizitig-Frontend sowie das Backend angepasst. 
 
 ### In diesem Repository wird dokumentiert, wie die Edge-Coverage-Informationen: 
+	
 	- aus der .gfa-Datei extrahiert
 	- in die Vizitig-Datenbank integriert und 
 	- im Vizitig-Frontend angezeigt werden. 
@@ -32,7 +33,7 @@ SQLite-Datenbank: Die Edge-Coverage-Informationen werden in der SQL-DB gespeiche
 		
 		- sqlite3 <Pfad zu der SQL-DB>
 		- .tables -> die Liste der Tabellen werden angezeigt
-		- select * from <Tabellen-Name> LImIt 10; -> Die ersten Zeilen der Tabelle werden angezeigt 
+		- select * from <Tabellen-Name> Limit 10; -> Die ersten Zeilen der Tabelle werden angezeigt 
 		- PRAGMA table_info(tabellenname); -> Struktur einer Tabelle wird angezeigt- 
 		- .schema -> zeigt der vollständige Schema von allen Tabellen an.
 		
@@ -43,9 +44,9 @@ Zuerst werden die Edge-Coverage Informationen in die SQL-DB eingetragen.Dies erf
 Im Frontend ist das Skript application.js für das Laden und Cachen von Daten zuständig. Die Funktion load_edge_coverage ruft den Backend-Endpoint auf,gruppiert alle Coverage-Einträge nach source-Knoten und speichert diese Information in einer Map.   
 
 ### 4. Wie werden die Edge-Coverage-Informationen dargestellt? 
-Für die Darstellung der Edge-Coverage-Informationen sind d3_viz.js und f3_actions.js zuständig.In d3_viz.js wird die ShowEdgeCoverage als auswählbare Aktion registriert. Im d3_actions.js gibt es zwei Funktionen, die die Kanten mit Coverage deutlich mit roter Farbe hervorheben (transform_edge) und pro Knoten die Coverage Informationen der ausgehenden Kanten als Text anzeigen.
+Für die Darstellung der Edge-Coverage-Informationen sind d3_viz.js und d3_actions.js zuständig.In d3_viz.js wird die ShowEdgeCoverage als auswählbare Aktion registriert. Im d3_actions.js gibt es zwei Funktionen, die die Kanten mit Coverage deutlich mit roter Farbe hervorheben (transform_edge) und pro Knoten die Coverage Informationen der ausgehenden Kanten als Text anzeigen.
 
-## Was muss vor der Ausführung der Pipeline beachten? 
+## Was muss man vor der Ausführung der Pipeline beachten? 
 	- alle Pfade in marbel2vizitig.sh sollen überprüft werden und angepasst werden, falls Bedarf dafür besteht. 
 	- die modifizierte Version (https://github.com/jlab/vizitig_clone.git) von Vizitig soll installiert werden.
 
