@@ -38,17 +38,17 @@ SQLite-Datenbank: Die Edge-Coverage-Informationen werden in der SQL-DB gespeiche
 		- .schema -> zeigt der vollständige Schema von allen Tabellen an.
 		
 ### 2.Wie werden die Edge-Coverage-Informationen an Backend geliefert? 
-Zuerst werden die Edge-Coverage Informationen in die SQL-DB eingetragen.Dies erfolgt mithilfe vom Skript add_edge_coverage_to_db.py. Dieses Skript liest die  dbg_g.gfa-Datei, ordnet Coverage den Kanten zu und schreibt für jede Kante einen Eintrag in edge_data2. Anschließend wird dann im Vizitig-Backend ein neuer FastAPI-Endpoint definiert, welche die Informationen in edges1 und edge_data2 über die KnotenId verbindet. Dieser Schritt ermöglicht alle Edge-Coverage-Daten auf Anfrage bereitzustellen. Backend kann auf dieser Webseite "http://localhost:4242/api/graphs/<name_des_projektes>/edge_coverag" nach dem Aufruf von diesem Befehl <vizitig run> überprüft werden. Auf der Webseite sollte man JSON Liste mit edge_id, source,target,coverage sehen. 
+Zuerst werden die Edge-Coverage Informationen in die SQL-DB eingetragen.Dies erfolgt mithilfe vom Skript add_edge_coverage_to_db.py. Dieses Skript liest die  dbg_g.gfa-Datei, ordnet Coverage den Kanten zu und schreibt für jede Kante einen Eintrag in edge_data2. Anschließend wird dann im Vizitig-Backend ein neuer FastAPI-Endpoint definiert, welche die Informationen in edges1 und edge_data2 über die KnotenId verbindet. Dieser Schritt ermöglicht alle Edge-Coverage-Daten auf Anfrage bereitzustellen. Backend kann auf dieser Webseite "http://localhost:4242/api/graphs/<name_des_projektes>/edge_coverage" nach dem Aufruf von diesem Befehl vizitig run überprüft werden. Auf der Webseite sollte man JSON Liste mit edge_id, source, target und coverage sehen. 
 
 ### 3. Wie werden die Edge-Coverage-Informationen an Frontend geliefert? 
 Im Frontend ist das Skript application.js für das Laden und Cachen von Daten zuständig. Die Funktion load_edge_coverage ruft den Backend-Endpoint auf,gruppiert alle Coverage-Einträge nach source-Knoten und speichert diese Information in einer Map.   
 
 ### 4. Wie werden die Edge-Coverage-Informationen dargestellt? 
-Für die Darstellung der Edge-Coverage-Informationen sind d3_viz.js und d3_actions.js zuständig.In d3_viz.js wird die ShowEdgeCoverage als auswählbare Aktion registriert. Im d3_actions.js gibt es zwei Funktionen, die die Kanten mit Coverage deutlich mit roter Farbe hervorheben (transform_edge) und pro Knoten die Coverage Informationen der ausgehenden Kanten als Text anzeigen.
+Für die Darstellung der Edge-Coverage-Informationen sind d3_viz.js und d3_actions.js zuständig.In d3_viz.js wird die ShowEdgeCoverage als auswählbare Aktion registriert. Im d3_actions.js gibt es zwei Funktionen, die die Kanten mit Coverage deutlich mit roter Farbe hervorheben (transform_edge) und pro Knoten die Coverage Informationen der ausgehenden Kanten als Text anzeigen (transform_node).
 
 ## Was muss man vor der Ausführung der Pipeline beachten? 
 	- alle Pfade in marbel2vizitig.sh sollen überprüft werden und angepasst werden, falls Bedarf dafür besteht. 
 	- die modifizierte Version (https://github.com/jlab/vizitig_clone.git) von Vizitig soll installiert werden.
 
 ## Was kann noch verbessert werden? 
-Aktuell werden die Edge-Coverage-Information unter den Knoten angezeigt. Man soll die Möglichkeit herausfinden, wie man diese Information über den Kanten darstellen kann? 
+Aktuell werden die Edge-Coverage-Informationen unter den Knoten angezeigt. Man soll die Möglichkeit herausfinden, wie man diese Information über den Kanten darstellen kann? 
