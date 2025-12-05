@@ -51,4 +51,4 @@ Für die Darstellung der Edge-Coverage-Informationen sind d3_viz.js und d3_actio
 	- die modifizierte Version (https://github.com/jlab/vizitig_clone.git) von Vizitig soll installiert werden.
 
 ## Was kann noch verbessert werden? 
-Aktuell werden die Edge-Coverage-Informationen unter den Knoten angezeigt. Man soll die Möglichkeit herausfinden, wie man diese Information über den Kanten darstellen kann? 
+Aktuell werden die Edge-Coverage-Informationen unter den Knoten angezeigt. Man soll die Möglichkeit herausfinden, wie man diese Information über den Kanten darstellen kann. 
